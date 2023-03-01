@@ -11,14 +11,20 @@ namespace PoisonBlocking
 {
     public class TestSettings
     {
-        [SettingName("Blocking Blocks Poisons and Diseases")]
+        [SettingName("Blocking Blocks Poisons")]
         public bool BlockPoisons = true;
 
-        [SettingName("Wards Block Poisons and Diseases")]
-        public bool WardBlockPoisons = true;
+        [SettingName("Blocking Blocks Diseases")]
+        public bool BlockDiseases = true;
 
         [SettingName("Blocking Blocks Enchantments")]
         public bool BlockEnchantments = true;
+
+        [SettingName("Wards Block Poisons")]
+        public bool WardBlockPoisons = false;
+
+        [SettingName("Wards Blocks Diseases")]
+        public bool WardBlockDiseases = true;
 
         [SettingName("Wards Block Enchantments")]
         public bool WardBlockEnchantments = false;
@@ -80,7 +86,7 @@ namespace PoisonBlocking
                     Data = new FunctionConditionData()
                     {
                         Function = Condition.Function.IsBlocking,
-                        RunOnType = Condition.RunOnType.Target
+                        RunOnType = Condition.RunOnType.Subject
                     }
                 },
                 new ConditionFloat()
@@ -115,9 +121,9 @@ namespace PoisonBlocking
                     Flags = Condition.Flag.OR,
                     Data = new FunctionConditionData()
                     {
-                        Function = Condition.Function.HasKeyword,
+                        Function = Condition.Function.HasMagicEffectKeyword,
                         ParameterOneRecord = FormKey.Factory("01EA69:Skyrim.esm").ToLink<IKeywordGetter>(),
-                        RunOnType = Condition.RunOnType.Target
+                        RunOnType = Condition.RunOnType.Subject
                     }
                 },
                 new ConditionFloat()
@@ -145,32 +151,52 @@ namespace PoisonBlocking
                 }
             };
 
-
-            if (Settings.Value.BlockPoisons || Settings.Value.WardBlockPoisons)
+            if (Settings.Value.BlockPoisons || Settings.Value.WardBlockPoisons || Settings.Value.BlockDiseases || Settings.Value.WardBlockDiseases)
             {
                 foreach (var spellGetter in state.LoadOrder.PriorityOrder.Spell().WinningOverrides())
                 {
-                    if (spellGetter.EditorID != null && !spellGetter.EditorID.Contains("Trap") && spellGetter.TargetType == TargetType.Touch && (spellGetter.Type == SpellType.Poison || spellGetter.Type == SpellType.Disease) && !Settings.Value.blacklist.Contains(spellGetter.FormKey.ToString()))
+                    if (spellGetter.TargetType == TargetType.Touch && spellGetter.EditorID != null && !spellGetter.EditorID.Contains("Trap") && !Settings.Value.blacklist.Contains(spellGetter.FormKey.ToString()))
                     {
-                        Console.WriteLine(spellGetter.EditorID);
-                        var spell = spellGetter.DeepCopy();
-
-                        foreach (var effect in spell.Effects)
+                        if (spellGetter.Type == SpellType.Poison && (Settings.Value.WardBlockPoisons || Settings.Value.BlockPoisons))
                         {
-                            if (Settings.Value.BlockPoisons)
+                            Console.WriteLine(spellGetter.EditorID);
+                            var spell = spellGetter.DeepCopy();
+                            foreach (var effect in spell.Effects)
                             {
-                                effect.Conditions.Add(blockConditions);
+                                if (Settings.Value.BlockPoisons)
+                                {
+                                    effect.Conditions.Add(blockConditions);
+                                }
+                                if (Settings.Value.WardBlockPoisons)
+                                {
+                                    effect.Conditions.Add(wardConditions);
+                                }
                             }
-                            if (Settings.Value.WardBlockPoisons)
-                            {
-                                effect.Conditions.Add(wardConditions);
-                            }
-                        }
+                            state.PatchMod.Spells.Add(spell);
 
-                        state.PatchMod.Spells.Add(spell);
+                        } else if (spellGetter.Type == SpellType.Disease && (Settings.Value.WardBlockDiseases || Settings.Value.BlockDiseases))
+                        {
+                            Console.WriteLine(spellGetter.EditorID);
+                            var spell = spellGetter.DeepCopy();
+                            foreach (var effect in spell.Effects)
+                            {
+                                if (Settings.Value.BlockDiseases)
+                                {
+                                    effect.Conditions.Add(blockConditions);
+                                }
+                                if (Settings.Value.WardBlockDiseases)
+                                {
+                                    effect.Conditions.Add(wardConditions);
+                                }
+                            }
+                            state.PatchMod.Spells.Add(spell);
+                        }
                     }
                 }
+            }
 
+            if (Settings.Value.BlockPoisons || Settings.Value.WardBlockPoisons)
+            {
                 foreach (var magiceffectGetter in state.LoadOrder.PriorityOrder.MagicEffect().WinningOverrides())
                 {
                     if (magiceffectGetter.EditorID != null && !magiceffectGetter.EditorID.Contains("Trap") && magiceffectGetter.Keywords != null && magiceffectGetter.Keywords.Contains(magicAlchHarmful) && !Settings.Value.blacklist.Contains(magiceffectGetter.FormKey.ToString()))
