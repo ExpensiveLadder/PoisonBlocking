@@ -5,6 +5,7 @@ using DynamicData;
 using Mutagen.Bethesda.Plugins;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Mutagen.Bethesda.WPF.Reflection.Attributes;
+using Noggog;
 
 namespace PoisonBlocking
 {
@@ -20,7 +21,7 @@ namespace PoisonBlocking
         public bool BlockEnchantments = true;
 
         [SettingName("Wards Block Enchantments")]
-        public bool WardBlockEnchantments = true;
+        public bool WardBlockEnchantments = false;
 
         [SettingName("Blacklisted FormKeys")]
         public List<string> blacklist = new()
@@ -34,10 +35,7 @@ namespace PoisonBlocking
             "069CE6:Skyrim.esm",
             "101BDF:Skyrim.esm",
             "016695:Dawnguard.esm",
-            "014556:Dawnguard.esm",
-            "01533D:Dawnguard.esm",
-            "01533E:Dawnguard.esm",
-            "0069C5:Dawnguard.esm"
+            "014556:Dawnguard.esm"
         };
     }
 
@@ -196,27 +194,36 @@ namespace PoisonBlocking
 
             if (Settings.Value.BlockEnchantments || Settings.Value.WardBlockEnchantments)
             {
-                foreach (var enchantmentGetter in state.LoadOrder.PriorityOrder.ObjectEffect().WinningOverrides())
+                List<IFormLinkNullableGetter<IEffectRecordGetter>> enchantments = new();
+                foreach (var weaponGetter in state.LoadOrder.PriorityOrder.Weapon().WinningOverrides())
                 {
-                    if (enchantmentGetter.EditorID != null && !enchantmentGetter.EditorID.Contains("Trap") && !enchantmentGetter.EditorID.Contains("RuneExplosion") && enchantmentGetter.CastType == CastType.FireAndForget && enchantmentGetter.TargetType == TargetType.Touch && enchantmentGetter.EnchantType == ObjectEffect.EnchantTypeEnum.Enchantment && !Settings.Value.blacklist.Contains(enchantmentGetter.FormKey.ToString()))
+                    if (weaponGetter.ObjectEffect != null && !enchantments.Contains(weaponGetter.ObjectEffect))
                     {
-                        Console.WriteLine(enchantmentGetter.EditorID);
-                        var enchantment = enchantmentGetter.DeepCopy();
-
-                        foreach (var effect in enchantment.Effects)
+                        if (weaponGetter.ObjectEffect.TryResolve<IObjectEffectGetter>(state.LinkCache, out var enchantmentGetter))
                         {
-                            if (Settings.Value.blacklist.Contains(effect.BaseEffect.FormKey.ToString())) continue;
-                            if (Settings.Value.BlockEnchantments)
+                            if (!Settings.Value.blacklist.Contains(enchantmentGetter.FormKey.ToString()) && enchantmentGetter.TargetType == TargetType.Touch && enchantmentGetter.EnchantType == ObjectEffect.EnchantTypeEnum.Enchantment)
                             {
-                                effect.Conditions.Add(blockConditions);
-                            }
-                            if (Settings.Value.WardBlockEnchantments)
-                            {
-                                effect.Conditions.Add(wardConditions);
-                            }
-                        }
+                                Console.WriteLine(enchantmentGetter.EditorID);
+                                enchantments.Add(weaponGetter.ObjectEffect);
+                                var enchantment = enchantmentGetter.DeepCopy();
 
-                        state.PatchMod.ObjectEffects.Add(enchantment);
+                                foreach (var effect in enchantment.Effects)
+                                {
+                                    if (Settings.Value.blacklist.Contains(effect.BaseEffect.FormKey.ToString())) continue;
+                                    if (Settings.Value.BlockEnchantments)
+                                    {
+                                        effect.Conditions.Add(blockConditions);
+                                    }
+                                    if (Settings.Value.WardBlockEnchantments)
+                                    {
+                                        effect.Conditions.Add(wardConditions);
+                                    }
+                                }
+
+                                state.PatchMod.ObjectEffects.Add(enchantment);
+                            }
+
+                        }
                     }
                 }
             }
