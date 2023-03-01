@@ -1,0 +1,16 @@
+{
+  "Nickname": "PoisonBlocking",
+  "Visibility": "Visible",
+  "OneLineDescription": "Prevents blocked hits from applying Poison, Diseases, and Enchantments.",
+  "LongDescription": "",
+  "PreferredAutoVersioning": "Default",
+  "RequiredMods": [],
+  "TargetedReleases": [
+    "SkyrimLE",
+    "SkyrimSE",
+    "SkyrimVR",
+    "EnderalLE",
+    "EnderalSE",
+    "SkyrimSEGog"
+  ]
+}
