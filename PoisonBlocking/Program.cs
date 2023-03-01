@@ -27,7 +27,17 @@ namespace PoisonBlocking
         {
             "001852:ccBGSSSE037-Curious.esl",
             "10C645:Skyrim.esm",
-            "017331:Skyrim.esm"
+            "017331:Skyrim.esm",
+            "0C5BE0:Skyrim.esm",
+            "0C5BE1:Skyrim.esm",
+            "03D37B:Dragonborn.esm",
+            "069CE6:Skyrim.esm",
+            "101BDF:Skyrim.esm",
+            "016695:Dawnguard.esm",
+            "014556:Dawnguard.esm",
+            "01533D:Dawnguard.esm",
+            "01533E:Dawnguard.esm",
+            "0069C5:Dawnguard.esm"
         };
     }
 
@@ -188,13 +198,14 @@ namespace PoisonBlocking
             {
                 foreach (var enchantmentGetter in state.LoadOrder.PriorityOrder.ObjectEffect().WinningOverrides())
                 {
-                    if (enchantmentGetter.EditorID != null && !enchantmentGetter.EditorID.Contains("Trap") && enchantmentGetter.CastType == CastType.FireAndForget && enchantmentGetter.TargetType == TargetType.Touch && enchantmentGetter.EnchantType == ObjectEffect.EnchantTypeEnum.Enchantment && !Settings.Value.blacklist.Contains(enchantmentGetter.FormKey.ToString()))
+                    if (enchantmentGetter.EditorID != null && !enchantmentGetter.EditorID.Contains("Trap") && !enchantmentGetter.EditorID.Contains("RuneExplosion") && enchantmentGetter.CastType == CastType.FireAndForget && enchantmentGetter.TargetType == TargetType.Touch && enchantmentGetter.EnchantType == ObjectEffect.EnchantTypeEnum.Enchantment && !Settings.Value.blacklist.Contains(enchantmentGetter.FormKey.ToString()))
                     {
                         Console.WriteLine(enchantmentGetter.EditorID);
                         var enchantment = enchantmentGetter.DeepCopy();
 
                         foreach (var effect in enchantment.Effects)
                         {
+                            if (Settings.Value.blacklist.Contains(effect.BaseEffect.FormKey.ToString())) continue;
                             if (Settings.Value.BlockEnchantments)
                             {
                                 effect.Conditions.Add(blockConditions);
