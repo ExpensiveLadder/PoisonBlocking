@@ -3,7 +3,6 @@ using Mutagen.Bethesda.Synthesis;
 using Mutagen.Bethesda.Skyrim;
 using DynamicData;
 using Mutagen.Bethesda.Plugins;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Mutagen.Bethesda.WPF.Reflection.Attributes;
 using Noggog;
 
@@ -14,11 +13,20 @@ namespace PoisonBlocking
         [SettingName("Blocking Blocks Poisons")]
         public bool BlockPoisons = true;
 
+        [SettingName("Blocking Poison Requires Shield")]
+        public bool ShieldPoisons = false;
+
         [SettingName("Blocking Blocks Diseases")]
         public bool BlockDiseases = true;
 
+        [SettingName("Blocking Diseases Requires Shield")]
+        public bool ShieldDiseases = false;
+
         [SettingName("Blocking Blocks Enchantments")]
         public bool BlockEnchantments = true;
+
+        [SettingName("Blocking Enchantments Requires Shield")]
+        public bool ShieldEnchantments = false;
 
         [SettingName("Wards Block Poisons")]
         public bool WardBlockPoisons = false;
@@ -63,6 +71,7 @@ namespace PoisonBlocking
 
 
         public static readonly FormLink<IKeywordGetter> magicAlchHarmful = FormKey.Factory("042509:Skyrim.esm").ToLink<IKeywordGetter>();
+        public static readonly FormLink<IKeywordGetter> armorShield = FormKey.Factory("0965B2:Skyrim.esm").ToLink<IKeywordGetter>();
 
         public static void RunPatch(IPatcherState<ISkyrimMod, ISkyrimModGetter> state)
         {
@@ -77,6 +86,18 @@ namespace PoisonBlocking
             {
                 CombatHitConeAngleValue = 35;
             }
+
+            ConditionFloat shieldCondition = new()
+            {
+                Flags = Condition.Flag.OR,
+                Data = new FunctionConditionData()
+                {
+                    Function = Condition.Function.WornHasKeyword,
+                    ParameterOneNumber = 0,
+                    ParameterOneRecord = armorShield,
+                    RunOnType = Condition.RunOnType.Subject
+                }
+            };
 
             List<ConditionFloat> blockConditions = new()
             {
@@ -165,6 +186,7 @@ namespace PoisonBlocking
                             {
                                 if (Settings.Value.BlockPoisons)
                                 {
+                                    if (Settings.Value.ShieldPoisons) effect.Conditions.Add(shieldCondition);
                                     effect.Conditions.Add(blockConditions);
                                 }
                                 if (Settings.Value.WardBlockPoisons)
@@ -182,6 +204,7 @@ namespace PoisonBlocking
                             {
                                 if (Settings.Value.BlockDiseases)
                                 {
+                                    if (Settings.Value.ShieldDiseases) effect.Conditions.Add(shieldCondition);
                                     effect.Conditions.Add(blockConditions);
                                 }
                                 if (Settings.Value.WardBlockDiseases)
@@ -206,6 +229,7 @@ namespace PoisonBlocking
 
                         if (Settings.Value.BlockPoisons)
                         {
+                            if (Settings.Value.ShieldPoisons) effect.Conditions.Add(shieldCondition);
                             effect.Conditions.Add(blockConditions);
                         }
                         if (Settings.Value.WardBlockPoisons)
@@ -238,6 +262,7 @@ namespace PoisonBlocking
                                     if (Settings.Value.blacklist.Contains(effect.BaseEffect.FormKey.ToString())) continue;
                                     if (Settings.Value.BlockEnchantments)
                                     {
+                                        if (Settings.Value.ShieldEnchantments) effect.Conditions.Add(shieldCondition);
                                         effect.Conditions.Add(blockConditions);
                                     }
                                     if (Settings.Value.WardBlockEnchantments)
