@@ -29,13 +29,13 @@ namespace PoisonBlocking
         public bool ShieldEnchantments = false;
 
         [SettingName("Wards Block Poisons")]
-        public bool WardBlockPoisons = false;
+        public bool WardBlockPoisons = true;
 
         [SettingName("Wards Blocks Diseases")]
         public bool WardBlockDiseases = true;
 
         [SettingName("Wards Block Enchantments")]
-        public bool WardBlockEnchantments = false;
+        public bool WardBlockEnchantments = true;
 
         [SettingName("Blacklisted FormKeys")]
         public List<string> blacklist = new()
