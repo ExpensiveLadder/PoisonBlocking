@@ -5,6 +5,7 @@ using DynamicData;
 using Mutagen.Bethesda.Plugins;
 using Mutagen.Bethesda.WPF.Reflection.Attributes;
 using Noggog;
+using System.Linq;
 
 namespace PoisonBlocking
 {
@@ -172,6 +173,8 @@ namespace PoisonBlocking
                 }
             };
 
+            List<FormKey> effects = new();
+
             if (Settings.Value.BlockPoisons || Settings.Value.WardBlockPoisons || Settings.Value.BlockDiseases || Settings.Value.WardBlockDiseases)
             {
                 foreach (var spellGetter in state.LoadOrder.PriorityOrder.Spell().WinningOverrides())
@@ -180,10 +183,13 @@ namespace PoisonBlocking
                     {
                         if (spellGetter.Type == SpellType.Poison && (Settings.Value.WardBlockPoisons || Settings.Value.BlockPoisons))
                         {
-                            Console.WriteLine(spellGetter.EditorID);
-                            var spell = spellGetter.DeepCopy();
-                            foreach (var effect in spell.Effects)
+                            foreach (var effectGetter in spellGetter.Effects)
                             {
+                                if (effects.Contains(effectGetter.BaseEffect.FormKey)) continue;
+                                if (Settings.Value.blacklist.Contains(effectGetter.BaseEffect.FormKey.ToString())) continue;
+                                var effect = effectGetter.BaseEffect.Resolve(state.LinkCache).DeepCopy();
+                                effects.Add(effect.FormKey);
+                                Console.WriteLine(effect.EditorID);
                                 if (Settings.Value.BlockPoisons)
                                 {
                                     if (Settings.Value.ShieldPoisons) effect.Conditions.Add(shieldCondition);
@@ -193,15 +199,17 @@ namespace PoisonBlocking
                                 {
                                     effect.Conditions.Add(wardConditions);
                                 }
+                                state.PatchMod.MagicEffects.Set(effect);
                             }
-                            state.PatchMod.Spells.Add(spell);
-
                         } else if (spellGetter.Type == SpellType.Disease && (Settings.Value.WardBlockDiseases || Settings.Value.BlockDiseases))
                         {
-                            Console.WriteLine(spellGetter.EditorID);
-                            var spell = spellGetter.DeepCopy();
-                            foreach (var effect in spell.Effects)
+                            foreach (var effectGetter in spellGetter.Effects)
                             {
+                                if (effects.Contains(effectGetter.BaseEffect.FormKey)) continue;
+                                if (Settings.Value.blacklist.Contains(effectGetter.BaseEffect.FormKey.ToString())) continue;
+                                var effect = effectGetter.BaseEffect.Resolve(state.LinkCache).DeepCopy();
+                                effects.Add(effect.FormKey);
+                                Console.WriteLine(effect.EditorID);
                                 if (Settings.Value.BlockDiseases)
                                 {
                                     if (Settings.Value.ShieldDiseases) effect.Conditions.Add(shieldCondition);
@@ -211,8 +219,8 @@ namespace PoisonBlocking
                                 {
                                     effect.Conditions.Add(wardConditions);
                                 }
+                                state.PatchMod.MagicEffects.Set(effect);
                             }
-                            state.PatchMod.Spells.Add(spell);
                         }
                     }
                 }
@@ -222,11 +230,11 @@ namespace PoisonBlocking
             {
                 foreach (var magiceffectGetter in state.LoadOrder.PriorityOrder.MagicEffect().WinningOverrides())
                 {
-                    if (magiceffectGetter.EditorID != null && !magiceffectGetter.EditorID.Contains("Trap") && magiceffectGetter.Keywords != null && magiceffectGetter.Keywords.Contains(magicAlchHarmful) && !Settings.Value.blacklist.Contains(magiceffectGetter.FormKey.ToString()))
+                    if (magiceffectGetter.EditorID != null && !magiceffectGetter.EditorID.Contains("Trap") && magiceffectGetter.Keywords != null && magiceffectGetter.Keywords.Contains(magicAlchHarmful) && !Settings.Value.blacklist.Contains(magiceffectGetter.FormKey.ToString()) && !effects.Contains(magiceffectGetter.FormKey))
                     {
                         Console.WriteLine(magiceffectGetter.EditorID);
                         var effect = magiceffectGetter.DeepCopy();
-
+                        effects.Add(effect.FormKey);
                         if (Settings.Value.BlockPoisons)
                         {
                             if (Settings.Value.ShieldPoisons) effect.Conditions.Add(shieldCondition);
@@ -236,44 +244,38 @@ namespace PoisonBlocking
                         {
                             effect.Conditions.Add(wardConditions);
                         }
-
-                        state.PatchMod.MagicEffects.Add(effect);
+                        state.PatchMod.MagicEffects.Set(effect);
                     }
                 }
             }
 
             if (Settings.Value.BlockEnchantments || Settings.Value.WardBlockEnchantments)
             {
-                List<IFormLinkNullableGetter<IEffectRecordGetter>> enchantments = new();
                 foreach (var weaponGetter in state.LoadOrder.PriorityOrder.Weapon().WinningOverrides())
                 {
-                    if (weaponGetter.ObjectEffect != null && !enchantments.Contains(weaponGetter.ObjectEffect))
+                    if (weaponGetter.ObjectEffect != null && weaponGetter.ObjectEffect.TryResolve<IObjectEffectGetter>(state.LinkCache, out var enchantmentGetter))
                     {
-                        if (weaponGetter.ObjectEffect.TryResolve<IObjectEffectGetter>(state.LinkCache, out var enchantmentGetter))
+                        if (!Settings.Value.blacklist.Contains(enchantmentGetter.FormKey.ToString()) && enchantmentGetter.TargetType == TargetType.Touch && enchantmentGetter.EnchantType == ObjectEffect.EnchantTypeEnum.Enchantment)
                         {
-                            if (!Settings.Value.blacklist.Contains(enchantmentGetter.FormKey.ToString()) && enchantmentGetter.TargetType == TargetType.Touch && enchantmentGetter.EnchantType == ObjectEffect.EnchantTypeEnum.Enchantment)
+                            var enchantment = enchantmentGetter.DeepCopy();
+                            foreach (var effectGetter in enchantment.Effects)
                             {
-                                Console.WriteLine(enchantmentGetter.EditorID);
-                                enchantments.Add(weaponGetter.ObjectEffect);
-                                var enchantment = enchantmentGetter.DeepCopy();
-
-                                foreach (var effect in enchantment.Effects)
+                                if (effects.Contains(effectGetter.BaseEffect.FormKey)) continue;
+                                if (Settings.Value.blacklist.Contains(effectGetter.BaseEffect.FormKey.ToString())) continue;
+                                var effect = effectGetter.BaseEffect.Resolve(state.LinkCache).DeepCopy();
+                                effects.Add(effect.FormKey);
+                                Console.WriteLine(effect.EditorID);
+                                if (Settings.Value.BlockEnchantments)
                                 {
-                                    if (Settings.Value.blacklist.Contains(effect.BaseEffect.FormKey.ToString())) continue;
-                                    if (Settings.Value.BlockEnchantments)
-                                    {
-                                        if (Settings.Value.ShieldEnchantments) effect.Conditions.Add(shieldCondition);
-                                        effect.Conditions.Add(blockConditions);
-                                    }
-                                    if (Settings.Value.WardBlockEnchantments)
-                                    {
-                                        effect.Conditions.Add(wardConditions);
-                                    }
+                                    if (Settings.Value.ShieldEnchantments) effect.Conditions.Add(shieldCondition);
+                                    effect.Conditions.Add(blockConditions);
                                 }
-
-                                state.PatchMod.ObjectEffects.Add(enchantment);
+                                if (Settings.Value.WardBlockEnchantments)
+                                {
+                                    effect.Conditions.Add(wardConditions);
+                                }
+                                state.PatchMod.MagicEffects.Set(effect);
                             }
-
                         }
                     }
                 }
