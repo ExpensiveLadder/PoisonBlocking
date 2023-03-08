@@ -107,6 +107,16 @@ namespace PoisonBlocking
                     Flags = Condition.Flag.OR,
                     Data = new FunctionConditionData()
                     {
+                        Function = Condition.Function.IsActor,
+                        ParameterOneNumber = 0,
+                        RunOnType = Condition.RunOnType.Subject
+                    }
+                },
+                new ConditionFloat()
+                {
+                    Flags = Condition.Flag.OR,
+                    Data = new FunctionConditionData()
+                    {
                         Function = Condition.Function.IsBlocking,
                         RunOnType = Condition.RunOnType.Subject
                     }
@@ -138,6 +148,16 @@ namespace PoisonBlocking
 
             List<ConditionFloat> wardConditions = new()
             {
+                new ConditionFloat()
+                {
+                    Flags = Condition.Flag.OR,
+                    Data = new FunctionConditionData()
+                    {
+                        Function = Condition.Function.IsActor,
+                        ParameterOneNumber = 0,
+                        RunOnType = Condition.RunOnType.Subject
+                    }
+                },
                 new ConditionFloat()
                 {
                     Flags = Condition.Flag.OR,
