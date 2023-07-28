@@ -5,6 +5,7 @@ using DynamicData;
 using Mutagen.Bethesda.Plugins;
 using Mutagen.Bethesda.WPF.Reflection.Attributes;
 using Noggog;
+using Mutagen.Bethesda.FormKeys.SkyrimSE;
 using System.Linq;
 
 namespace PoisonBlocking
@@ -88,16 +89,13 @@ namespace PoisonBlocking
                 CombatHitConeAngleValue = 35;
             }
 
+            var shieldCondData = new WornHasKeywordConditionData();
+            shieldCondData.Keyword.Link.SetTo(armorShield);
             ConditionFloat shieldCondition = new()
             {
                 Flags = Condition.Flag.OR,
-                Data = new FunctionConditionData()
-                {
-                    Function = Condition.Function.WornHasKeyword,
-                    ParameterOneNumber = 0,
-                    ParameterOneRecord = armorShield,
-                    RunOnType = Condition.RunOnType.Subject
-                }
+                CompareOperator = CompareOperator.NotEqualTo,
+                Data = shieldCondData
             };
 
             List<ConditionFloat> blockConditions = new()
@@ -105,90 +103,68 @@ namespace PoisonBlocking
                 new ConditionFloat()
                 {
                     Flags = Condition.Flag.OR,
-                    Data = new FunctionConditionData()
-                    {
-                        Function = Condition.Function.IsActor,
-                        ParameterOneNumber = 0,
-                        RunOnType = Condition.RunOnType.Subject
-                    }
+                    CompareOperator = CompareOperator.NotEqualTo,
+                    Data = new IsActorConditionData()
                 },
                 new ConditionFloat()
                 {
                     Flags = Condition.Flag.OR,
-                    Data = new FunctionConditionData()
-                    {
-                        Function = Condition.Function.IsBlocking,
-                        RunOnType = Condition.RunOnType.Subject
-                    }
+                    Data = new IsBlockingConditionData()
                 },
                 new ConditionFloat()
                 {
                     CompareOperator = CompareOperator.LessThanOrEqualTo,
                     ComparisonValue = 180 - CombatHitConeAngleValue,
                     Flags = Condition.Flag.OR,
-                    Data = new FunctionConditionData()
+                    Data = new GetRelativeAngleConditionData()
                     {
-                        Function = Condition.Function.GetRelativeAngle,
-                        ParameterTwoNumber = 90,
-                        RunOnType = Condition.RunOnType.Subject
+                        Axis = Axis.Z
                     }
                 },
                 new ConditionFloat()
                 {
                     CompareOperator = CompareOperator.GreaterThanOrEqualTo,
                     ComparisonValue = 180 + CombatHitConeAngleValue,
-                    Data = new FunctionConditionData()
+                    Data = new GetRelativeAngleConditionData()
                     {
-                        Function = Condition.Function.GetRelativeAngle,
-                        ParameterTwoNumber = 90,
-                        RunOnType = Condition.RunOnType.Subject
+                        Axis = Axis.Z
                     }
                 }
             };
 
+
+            var hasWardCondData = new HasMagicEffectKeywordConditionData();
+            hasWardCondData.Keyword.Link.SetTo(Skyrim.Keyword.MagicWard);
             List<ConditionFloat> wardConditions = new()
             {
                 new ConditionFloat()
                 {
                     Flags = Condition.Flag.OR,
-                    Data = new FunctionConditionData()
-                    {
-                        Function = Condition.Function.IsActor,
-                        ParameterOneNumber = 0,
-                        RunOnType = Condition.RunOnType.Subject
-                    }
+                    CompareOperator = CompareOperator.NotEqualTo,
+                    Data = new IsActorConditionData()
                 },
                 new ConditionFloat()
                 {
                     Flags = Condition.Flag.OR,
-                    Data = new FunctionConditionData()
-                    {
-                        Function = Condition.Function.HasMagicEffectKeyword,
-                        ParameterOneRecord = FormKey.Factory("01EA69:Skyrim.esm").ToLink<IKeywordGetter>(),
-                        RunOnType = Condition.RunOnType.Subject
-                    }
+                    Data = hasWardCondData
                 },
                 new ConditionFloat()
                 {
                     CompareOperator = CompareOperator.LessThanOrEqualTo,
                     ComparisonValue = 90,
                     Flags = Condition.Flag.OR,
-                    Data = new FunctionConditionData()
+                    Data = new GetRelativeAngleConditionData()
                     {
-                        Function = Condition.Function.GetRelativeAngle,
-                        ParameterTwoNumber = 90,
-                        RunOnType = Condition.RunOnType.Subject
+                        Axis = Axis.Z
                     }
                 },
                 new ConditionFloat()
                 {
                     CompareOperator = CompareOperator.GreaterThanOrEqualTo,
                     ComparisonValue = 270,
-                    Data = new FunctionConditionData()
+                    Data = new GetRelativeAngleConditionData()
                     {
-                        Function = Condition.Function.GetRelativeAngle,
-                        ParameterTwoNumber = 90,
-                        RunOnType = Condition.RunOnType.Subject
+                        Axis = Axis.Z
                     }
                 }
             };
