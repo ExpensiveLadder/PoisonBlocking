@@ -89,6 +89,12 @@ namespace PoisonBlocking
                 CombatHitConeAngleValue = 35;
             }
 
+            ConditionFloat isActorCondition = new()
+            {
+                CompareOperator = CompareOperator.NotEqualTo,
+                Data = new IsActorConditionData()
+            };
+
             var shieldCondData = new WornHasKeywordConditionData();
             shieldCondData.Keyword.Link.SetTo(armorShield);
             ConditionFloat shieldCondition = new()
@@ -100,12 +106,6 @@ namespace PoisonBlocking
 
             List<ConditionFloat> blockConditions = new()
             {
-                new ConditionFloat()
-                {
-                    Flags = Condition.Flag.OR,
-                    CompareOperator = CompareOperator.NotEqualTo,
-                    Data = new IsActorConditionData()
-                },
                 new ConditionFloat()
                 {
                     Flags = Condition.Flag.OR,
@@ -137,12 +137,6 @@ namespace PoisonBlocking
             hasWardCondData.Keyword.Link.SetTo(Skyrim.Keyword.MagicWard);
             List<ConditionFloat> wardConditions = new()
             {
-                new ConditionFloat()
-                {
-                    Flags = Condition.Flag.OR,
-                    CompareOperator = CompareOperator.NotEqualTo,
-                    Data = new IsActorConditionData()
-                },
                 new ConditionFloat()
                 {
                     Flags = Condition.Flag.OR,
@@ -186,6 +180,7 @@ namespace PoisonBlocking
                                 var effect = effectGetter.BaseEffect.Resolve(state.LinkCache).DeepCopy();
                                 effects.Add(effect.FormKey);
                                 Console.WriteLine(effect.EditorID);
+                                effect.Conditions.Add(isActorCondition);
                                 if (Settings.Value.BlockPoisons)
                                 {
                                     if (Settings.Value.ShieldPoisons) effect.Conditions.Add(shieldCondition);
@@ -206,6 +201,7 @@ namespace PoisonBlocking
                                 var effect = effectGetter.BaseEffect.Resolve(state.LinkCache).DeepCopy();
                                 effects.Add(effect.FormKey);
                                 Console.WriteLine(effect.EditorID);
+                                effect.Conditions.Add(isActorCondition);
                                 if (Settings.Value.BlockDiseases)
                                 {
                                     if (Settings.Value.ShieldDiseases) effect.Conditions.Add(shieldCondition);
@@ -228,9 +224,10 @@ namespace PoisonBlocking
                 {
                     if (magiceffectGetter.EditorID != null && !magiceffectGetter.EditorID.Contains("Trap") && magiceffectGetter.Keywords != null && magiceffectGetter.Keywords.Contains(magicAlchHarmful) && !Settings.Value.blacklist.Contains(magiceffectGetter.FormKey.ToString()) && !effects.Contains(magiceffectGetter.FormKey))
                     {
-                        Console.WriteLine(magiceffectGetter.EditorID);
                         var effect = magiceffectGetter.DeepCopy();
                         effects.Add(effect.FormKey);
+                        Console.WriteLine(magiceffectGetter.EditorID);
+                        effect.Conditions.Add(isActorCondition);
                         if (Settings.Value.BlockPoisons)
                         {
                             if (Settings.Value.ShieldPoisons) effect.Conditions.Add(shieldCondition);
@@ -261,6 +258,7 @@ namespace PoisonBlocking
                                 var effect = effectGetter.BaseEffect.Resolve(state.LinkCache).DeepCopy();
                                 effects.Add(effect.FormKey);
                                 Console.WriteLine(effect.EditorID);
+                                effect.Conditions.Add(isActorCondition);
                                 if (Settings.Value.BlockEnchantments)
                                 {
                                     if (Settings.Value.ShieldEnchantments) effect.Conditions.Add(shieldCondition);
