@@ -177,20 +177,22 @@ namespace PoisonBlocking
                             {
                                 if (effects.Contains(effectGetter.BaseEffect.FormKey)) continue;
                                 if (Settings.Value.blacklist.Contains(effectGetter.BaseEffect.FormKey.ToString())) continue;
-                                var effect = effectGetter.BaseEffect.Resolve(state.LinkCache).DeepCopy();
-                                effects.Add(effect.FormKey);
-                                Console.WriteLine(effect.EditorID);
-                                effect.Conditions.Add(isActorCondition);
-                                if (Settings.Value.BlockPoisons)
-                                {
-                                    if (Settings.Value.ShieldPoisons) effect.Conditions.Add(shieldCondition);
-                                    effect.Conditions.Add(blockConditions);
+                                if (effectGetter.BaseEffect.TryResolve(state.LinkCache, out var magicEffect)) {
+                                    var effect = magicEffect.DeepCopy();
+                                    effects.Add(effect.FormKey);
+                                    Console.WriteLine(effect.EditorID);
+                                    effect.Conditions.Add(isActorCondition);
+                                    if (Settings.Value.BlockPoisons)
+                                    {
+                                        if (Settings.Value.ShieldPoisons) effect.Conditions.Add(shieldCondition);
+                                        effect.Conditions.Add(blockConditions);
+                                    }
+                                    if (Settings.Value.WardBlockPoisons)
+                                    {
+                                        effect.Conditions.Add(wardConditions);
+                                    }
+                                    state.PatchMod.MagicEffects.Set(effect);
                                 }
-                                if (Settings.Value.WardBlockPoisons)
-                                {
-                                    effect.Conditions.Add(wardConditions);
-                                }
-                                state.PatchMod.MagicEffects.Set(effect);
                             }
                         } else if (spellGetter.Type == SpellType.Disease && (Settings.Value.WardBlockDiseases || Settings.Value.BlockDiseases))
                         {
@@ -198,20 +200,24 @@ namespace PoisonBlocking
                             {
                                 if (effects.Contains(effectGetter.BaseEffect.FormKey)) continue;
                                 if (Settings.Value.blacklist.Contains(effectGetter.BaseEffect.FormKey.ToString())) continue;
-                                var effect = effectGetter.BaseEffect.Resolve(state.LinkCache).DeepCopy();
-                                effects.Add(effect.FormKey);
-                                Console.WriteLine(effect.EditorID);
-                                effect.Conditions.Add(isActorCondition);
-                                if (Settings.Value.BlockDiseases)
+                                if (effectGetter.BaseEffect.TryResolve(state.LinkCache, out var magicEffect))
                                 {
-                                    if (Settings.Value.ShieldDiseases) effect.Conditions.Add(shieldCondition);
-                                    effect.Conditions.Add(blockConditions);
+                                    var effect = magicEffect.DeepCopy();
+                                    effects.Add(effect.FormKey);
+                                    Console.WriteLine(effect.EditorID);
+                                    effect.Conditions.Add(isActorCondition);
+                                    if (Settings.Value.BlockDiseases)
+                                    {
+                                        if (Settings.Value.ShieldDiseases) effect.Conditions.Add(shieldCondition);
+                                        effect.Conditions.Add(blockConditions);
+                                    }
+                                    if (Settings.Value.WardBlockDiseases)
+                                    {
+                                        effect.Conditions.Add(wardConditions);
+                                    }
+                                    state.PatchMod.MagicEffects.Set(effect);
                                 }
-                                if (Settings.Value.WardBlockDiseases)
-                                {
-                                    effect.Conditions.Add(wardConditions);
-                                }
-                                state.PatchMod.MagicEffects.Set(effect);
+
                             }
                         }
                     }
@@ -255,20 +261,22 @@ namespace PoisonBlocking
                             {
                                 if (effects.Contains(effectGetter.BaseEffect.FormKey)) continue;
                                 if (Settings.Value.blacklist.Contains(effectGetter.BaseEffect.FormKey.ToString())) continue;
-                                var effect = effectGetter.BaseEffect.Resolve(state.LinkCache).DeepCopy();
-                                effects.Add(effect.FormKey);
-                                Console.WriteLine(effect.EditorID);
-                                effect.Conditions.Add(isActorCondition);
-                                if (Settings.Value.BlockEnchantments)
-                                {
-                                    if (Settings.Value.ShieldEnchantments) effect.Conditions.Add(shieldCondition);
-                                    effect.Conditions.Add(blockConditions);
+                                if (effectGetter.BaseEffect.TryResolve(state.LinkCache, out var magicEffect)) {
+                                    var effect = magicEffect.DeepCopy();
+                                    effects.Add(effect.FormKey);
+                                    Console.WriteLine(effect.EditorID);
+                                    effect.Conditions.Add(isActorCondition);
+                                    if (Settings.Value.BlockEnchantments)
+                                    {
+                                        if (Settings.Value.ShieldEnchantments) effect.Conditions.Add(shieldCondition);
+                                        effect.Conditions.Add(blockConditions);
+                                    }
+                                    if (Settings.Value.WardBlockEnchantments)
+                                    {
+                                        effect.Conditions.Add(wardConditions);
+                                    }
+                                    state.PatchMod.MagicEffects.Set(effect);
                                 }
-                                if (Settings.Value.WardBlockEnchantments)
-                                {
-                                    effect.Conditions.Add(wardConditions);
-                                }
-                                state.PatchMod.MagicEffects.Set(effect);
                             }
                         }
                     }
